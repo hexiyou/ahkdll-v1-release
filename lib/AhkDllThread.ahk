@@ -1,7 +1,7 @@
-; #include <_MemoryLibrary>
+;~ #include <_MemoryLibrary>
 AhkDllThread_IsH(){ ; FileGetVersionInfo Written by SKAN modified by HotKeyIt www.autohotkey.com/forum/viewtopic.php?p=233188#233188
  Static HexVal:="msvcrt\s" (A_IsUnicode?"w":"") "printf",AHK,init:=VarSetCapacity(AHK,520) DllCall("GetModuleFileName","PTR",0,"PTR",&AHK,"UInt",520) VarSetCapacity(AHK,-1)
- If ((FSz:=DllCall("Version\GetFileVersionInfoSize","Str",AHK,"UInt",0,"CDecl")) && VarSetCapacity(FVI,FSz,0) && VarSetCapacity(Trans,8*(A_IsUnicode?2:1)))
+ If (FSz:=DllCall("Version\GetFileVersionInfoSize","Str",AHK,"UInt",0)),VarSetCapacity(FVI,FSz,0),VarSetCapacity(Trans,8*(A_IsUnicode?2:1))
   && DllCall("Version\GetFileVersionInfo","Str",AHK,"Int",0,"UInt",FSz,"PTR",&FVI) 
   && DllCall("Version\VerQueryValue","PTR",&FVI,"Str","\VarFileInfo\Translation","PTR*",Translation,"UInt",0)
   && DllCall(HexVal,"Str",Trans,"Str","`%08X","UInt",NumGet(Translation+0),"CDecl")
@@ -9,16 +9,17 @@ AhkDllThread_IsH(){ ; FileGetVersionInfo Written by SKAN modified by HotKeyIt ww
     Return StrGet(InfoPtr+0,DllCall("lstrlen" (A_IsUnicode?"W":"A"),"PTR",InfoPtr)) = "AutoHotkey_H"
 				|| StrGet(InfoPtr+0,DllCall("lstrlen" (A_IsUnicode?"W":"A"),"PTR",InfoPtr)) = " "
 }
-AhkDllThread(dll="AutoHotkey.dll",obj=0){
+
+AhkDllThread(dll:="AutoHotkey.dll",obj:=0){
   static init,ahkfunction,hLib,dllptr,libScript,ahkexec,DynaCall:="DynaCall", MemoryLoadLibrary:="MemoryLoadLibrary",MemoryFreeLibrary:="MemoryFreeLibrary"
       ,ResourceLoadLibrary:="ResourceLoadLibrary", MemoryGetProcAddress:="MemoryGetProcAddress"
   static AHK_H:=AhkDllThread_IsH()
   static base:={__Delete:"AhkDllThread"}
   static functions :="
 (Join
-ahkFunction:s==sssssssssss|ahkPostFunction:i==sssssssssss|
+ahkFunction:s==stttttttttt|ahkPostFunction:i==stttttttttt|
 ahkdll:ut==sss|ahktextdll:ut==sss|ahkReady:|ahkReload:i|
-ahkTerminate:i|addFile:ut==sucuc|addScript:ut==si|ahkExec:ui==s|
+ahkTerminate:i=i|addFile:ut==sucuc|addScript:ut==si|ahkExec:ui==s|
 ahkassign:ui==ss|ahkExecuteLine:ut=utuiui|ahkFindFunc:ut==s|
 ahkFindLabel:ut==s|ahkgetvar:s==sui|ahkLabel:ui==sui|ahkPause:i=s|ahkIsUnicode:
 )"
@@ -46,8 +47,12 @@ AhkDllThreadDLL(dll=""AutoHotkey.dll"",obj=0){
   object:={"""":new _MemoryLibrary(obj?obj:dll)}
   Loop,Parse,functions,|
   {
-    StringSplit,v,A_LoopField,:
-    object[map="""" ? v1 : !InStr(map,v1) ? v1 : SubStr(map,InStr(map,v1)+StrLen(v1)+1,InStr(map,A_Space,0,InStr(map,v1)))]:=DynaCall(object[""""].GetProcAddress(v1),v2)
+    v:=StrSplit(A_LoopField,"":"")
+    If v.1=""ahkFunction""||v.1=""ahkPostFunction""
+      dynacall_:=DynaCall(object[""""].GetProcAddress(v.1),v.2,"""",0,0,0,0,0,0,0,0,0,0)
+    else
+      dynacall_:=DynaCall(object[""""].GetProcAddress(v.1),v.2)
+    object[map="""" ? v.1 : !InStr(map,v.1) ? v.1 : SubStr(map,InStr(map,v.1)+StrLen(v.1)+1,InStr(map,A_Space,0,InStr(map,v.1)))]:=dynacall_
   }
   object.base:=Object(" (&base) ")
   return &object
@@ -66,9 +71,9 @@ AhkDllThreadDLL(dll=""AutoHotkey.dll"",obj=0){
   If !AHK_H{
     If (init || ((hLib:=new _MemoryLibrary(A_IsCompiled?(dllptr:=DllCall("LockResource","ptr",DllCall("LoadResource","ptr",lib,"ptr",DllCall("FindResource","ptr",lib:=DllCall("GetModuleHandle","ptr",0,"ptr"),"str",dll,"ptr",10,"ptr"),"ptr"),"ptr")):dll)) && (Init:=hLib.GetProcAddress("ahktextdll")) && (!A_IsCompiled||LibScript:=(!(res:=DllCall("FindResource","ptr",lib:=DllCall("GetModuleHandle","ptr",0,"ptr"),"str",">AUTOHOTKEY SCRIPT<","ptr",10,"ptr"))?(res:=DllCall("FindResource","ptr",lib,"str",">AHK WITH ICON<","ptr",10,"ptr")):res)?StrGet(DllCall("LockResource","ptr",DllCall("LoadResource","ptr",lib,"ptr",res,"ptr"),"ptr"),DllCall("SizeofResource","ptr",lib,"ptr",res,"uint"),"UTF-8"):""))){
       If (ahkfunction || (DllCall(init,"Str",AhkDllThreadfunc "`n" LibScript,"Str","","Str","","Cdecl UInt") && (ahkfunction:=hLib.GetProcAddress("ahkFunction")) && (ahkExec:=hLib.GetProcAddress("ahkExec")))){
-        return Object(0+DllCall(ahkfunction,"Str","AhkDllThreadDLL","Str",dll,"Str",A_IsCompiled?dllptr:"","Str","","Str","","Str","","Str","","Str","","Str","","Str","","Str","","CDecl Str"))
+        DllCall(ahkfunction,"Str","AhkDllThreadDLL","Str","0","Str","","Str","","Str","","Str","","Str","","Str","","Str","","Str","","Str","","CDecl Str")
+        return Object(0+DllCall(ahkfunction,"Str","AhkDllThreadDLL","Str",dll,"Str",A_IsCompiled?dllptr:"","PTR",0,"PTR",0,"PTR",0,"PTR",0,"PTR",0,"PTR",0,"PTR",0,"PTR",0,"CDecl Str"))
         ;reset internal return memory in autoHotkey.dll and release object
-        ,DllCall(ahkfunction,"Str","AhkDllThreadDLL","Str","0","PTR",0,"PTR",0,"PTR",0,"PTR",0,"PTR",0,"PTR",0,"PTR",0,"PTR",0,"PTR",0,"CDecl Str")
       } else {
         MsgBox Could not load script in %dll%
         Return 0
@@ -81,8 +86,13 @@ AhkDllThreadDLL(dll=""AutoHotkey.dll"",obj=0){
   object:=IsObject(obj)?obj:{},object[""]:= A_IsCompiled ? %ResourceLoadLibrary%(dll) : %MemoryLoadLibrary%(dll)
   Loop,Parse,functions,|
   {
-    StringSplit,v,A_LoopField,:
-    object[map="" ? v1 : !InStr(map,v1) ? v1 : SubStr(map,InStr(map,v1)+StrLen(v1)+1,InStr(map,A_Space,0,InStr(map,v1)))]:=%DynaCall%(%MemoryGetProcAddress%(object[""],v1),v2)
+    v:=StrSplit(A_LoopField,":")
+    If v.1="ahkFunction"||v.1="ahkPostFunction"
+      dynacall_:=%DynaCall%(%MemoryGetProcAddress%(object[""],v.1),v.2,"",0,0,0,0,0,0,0,0,0,0)
+    else
+      dynacall_:=%DynaCall%(%MemoryGetProcAddress%(object[""],v.1),v.2)
+    object[map="" ? v.1 : !InStr(map,v.1) ? v.1 : SubStr(map,InStr(map,v.1)+StrLen(v.1)+1,InStr(map,A_Space,0,InStr(map,v.1)))]:=dynacall_
   }
-  return object,object.base:=base
+  object.base:=base
+  return object
 }

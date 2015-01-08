@@ -10,8 +10,7 @@ MCodeH(h,def,p*) { ; allocate memory in static object and write Machine Code the
    ;~ else 
    addr:=f.GetAddress(f.MaxIndex())
    Loop % len
-      NumPut("0x" . SubStr(h,2*A_Index-1,2), addr, A_Index-1, "Char")
-   MsgBox % addr "`n" def
+      NumPut("0x" . SubStr(h,2*A_Index-1,2), addr+0, A_Index-1, "Char")
    if p.MaxIndex()
       Return DynaCalls[h]:=DynaCall(addr,def,p*)
    else Return DynaCalls[h]:=DynaCall(addr,def)
