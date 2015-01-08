@@ -10,7 +10,7 @@ FileGetInfo( peFile:="", p*) {   ; Written by SKAN, modified by HotKeyIt
  If !Trans:=format("{1:.8X}",NumGet(Transl+0))
    Return DllCall( "SetLastError", UInt,3),""
  for k,v in p
- { subBlock := "\StringFileInfo\" SubStr(Trans,-4) SubStr(Trans,1,4) "\" v
+ { subBlock := "\StringFileInfo\" SubStr(Trans,-3) SubStr(Trans,1,4) "\" v
    If ! DllCall( "Version\VerQueryValueW", "PTR",&FVI, "Str",SubBlock, "PTR*",InfoPtr, "UInt",0 )
      continue
    If Value := StrGet( InfoPtr )
